@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head></head>
+<body>
+    <script>
+        const API_BASE = "https://classroom.googleapis.com/v1/courses";
+
+        async function listCourses(secret) {
+            const url = new URL(API_BASE);
+            url.searchParams.set("pageSize", "100");
+
+            const res = await fetch(url.toString(), {
+                method: "GET",
+                headers: { "Authorization": "Bearer " + secret }
+            });
+
+            if (!res.ok) {
+                const err = await parseErrorResponse(res);
+                throw new Error(err);
+            }
+
+            const body = await res.json();
+            const courses = body.courses || [];
+
+            if (courses.length === 0) {
+                return { result: "No courses found for the authenticated user." };
+            }
+
+            const result = {
+                courses: courses.map(c => ({
+                    id: c.id,
+                    name: c.name,
+                    section: c.section,
+                    courseState: c.courseState,
+                    alternateLink: c.alternateLink
+                }))
+            };
+
+            if (body.nextPageToken) {
+                result.note = "More courses exist beyond this page. Ask the user if they want to see more.";
+            }
+
+            return { result };
+        }
+
+        async function createCourse(params, secret) {
+            if (!params.courseName || params.courseName.trim() === "") {
+                return { error: "A courseName is required to create a course." };
+            }
+
+            const body = {
+                name: params.courseName.trim(),
+                ownerId: params.ownerId || "me"
+            };
+            if (params.section) body.section = params.section;
+            if (params.description) body.description = params.description;
+            if (params.room) body.room = params.room;
+
+            const res = await fetch(API_BASE, {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + secret,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (!res.ok) {
+                const err = await parseErrorResponse(res);
+                throw new Error(err);
+            }
+
+            const course = await res.json();
+            return {
+                result: {
+                    id: course.id,
+                    name: course.name,
+                    section: course.section,
+                    courseState: course.courseState,
+                    enrollmentCode: course.enrollmentCode,
+                    alternateLink: course.alternateLink
+                }
+            };
+        }
+
+        async function parseErrorResponse(res) {
+            try {
+                const body = await res.json();
+                const msg = body.error && body.error.message
+                    ? body.error.message
+                    : JSON.stringify(body);
+                return `HTTP ${res.status}: ${msg}`;
+            } catch {
+                return `HTTP ${res.status}: ${res.statusText}`;
+            }
+        }
+
+        window["ai_edge_gallery_get_result"] = async (data, secret) => {
+            try {
+                const params = JSON.parse(data);
+                const action = (params.action || "").toLowerCase();
+
+                if (action === "list") {
+                    return JSON.stringify(await listCourses(secret));
+                }
+
+                if (action === "create") {
+                    return JSON.stringify(await createCourse(params, secret));
+                }
+
+                return JSON.stringify({
+                    error: 'Invalid action. Must be "list" or "create".'
+                });
+            } catch (e) {
+                console.error(e);
+                return JSON.stringify({
+                    error: "Classroom skill failed: " + e.message
+                });
+            }
+        };
+    </script>
+</body>
+</html>
