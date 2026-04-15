@@ -52,8 +52,8 @@
 <body>
     <div class="avatar-container" id="avatarFace" aria-hidden="true">🤖</div>
     <p id="subtitle"></p>
-    <button type="button" id="speakBtn">Tap to hear</button>
-    <p class="hint">Uses your device's built-in speech. Tap the button if audio does not start automatically.</p>
+    <button type="button" id="speakBtn">Replay</button>
+    <p class="hint">Audio should start automatically. If you hear nothing (some devices block autoplay), tap Replay.</p>
 
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -86,13 +86,23 @@
             subtitle.textContent = textToSpeak;
             speakBtn.addEventListener("click", speak);
 
-            window.addEventListener("load", function () {
-                try {
-                    speak();
-                } catch (e) {
-                    console.warn(e);
-                }
-            });
+            try {
+                window.speechSynthesis.getVoices();
+                speak();
+            } catch (e) {
+                console.warn(e);
+            }
+
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.addEventListener("voiceschanged", function onVoices() {
+                    window.speechSynthesis.removeEventListener("voiceschanged", onVoices);
+                    try {
+                        speak();
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                });
+            }
         } else {
             subtitle.textContent = "No text to speak.";
             speakBtn.disabled = true;

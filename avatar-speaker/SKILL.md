@@ -19,4 +19,4 @@ When you respond to the user, call the `run_js` tool with the following exact pa
 - **data:** A JSON string with the following field:
   - **text:** String. The exact text you want the avatar to speak out loud. This must be plain text suitable for speech (no markdown, no code fences). Keep it under **2000 characters** so it fits safely in the webview URL.
 
-After the tool returns, briefly acknowledge in chat that the avatar is speaking (or that the user can tap "Tap to hear" on iPhone if needed).
+After the tool returns, briefly acknowledge in chat that the avatar is speaking aloud automatically. Mention "Replay" only if the user says they heard nothing.
