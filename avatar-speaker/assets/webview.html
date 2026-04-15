@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .avatar-container {
+            text-align: center;
+            margin: 12px 0 8px;
+            font-size: 56px;
+            line-height: 1.2;
+        }
+        #subtitle {
+            font-size: 15px;
+            line-height: 1.45;
+            margin: 0 0 16px;
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 10px 12px;
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            background: #38bdf8;
+            color: #0f172a;
+            cursor: pointer;
+        }
+        button:active {
+            opacity: 0.9;
+        }
+        .hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="avatar-container" id="avatarFace" aria-hidden="true">🤖</div>
+    <p id="subtitle"></p>
+    <button type="button" id="speakBtn">Tap to hear</button>
+    <p class="hint">Uses your device's built-in speech. Tap the button if audio does not start automatically.</p>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const textToSpeak = (params.get("data") || "").trim();
+
+        const avatar = document.getElementById("avatarFace");
+        const subtitle = document.getElementById("subtitle");
+        const speakBtn = document.getElementById("speakBtn");
+
+        function speak() {
+            if (!textToSpeak) return;
+
+            window.speechSynthesis.cancel();
+
+            const u = new SpeechSynthesisUtterance(textToSpeak);
+            u.onstart = function () {
+                avatar.textContent = "🗣️";
+            };
+            u.onend = function () {
+                avatar.textContent = "🤖";
+            };
+            u.onerror = function () {
+                avatar.textContent = "🤖";
+            };
+
+            window.speechSynthesis.speak(u);
+        }
+
+        if (textToSpeak) {
+            subtitle.textContent = textToSpeak;
+            speakBtn.addEventListener("click", speak);
+
+            window.addEventListener("load", function () {
+                try {
+                    speak();
+                } catch (e) {
+                    console.warn(e);
+                }
+            });
+        } else {
+            subtitle.textContent = "No text to speak.";
+            speakBtn.disabled = true;
+            speakBtn.textContent = "Nothing to play";
+        }
+    </script>
+</body>
+</html>

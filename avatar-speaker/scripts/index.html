@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head></head>
+<body>
+    <script>
+        const MAX_TEXT_LENGTH = 2000;
+
+        window["ai_edge_gallery_get_result"] = async (data) => {
+            try {
+                const jsonData = JSON.parse(data);
+                const text = jsonData.text;
+
+                if (text === undefined || text === null) {
+                    return JSON.stringify({ error: "Missing required field: text." });
+                }
+
+                const trimmed = String(text).trim();
+                if (trimmed === "") {
+                    return JSON.stringify({ error: "Field text must be a non-empty string." });
+                }
+
+                if (trimmed.length > MAX_TEXT_LENGTH) {
+                    return JSON.stringify({
+                        error: `Text exceeds maximum length of ${MAX_TEXT_LENGTH} characters. Shorten the response.`
+                    });
+                }
+
+                const encodedText = encodeURIComponent(trimmed);
+
+                return JSON.stringify({
+                    result: "Opening avatar...",
+                    webview: {
+                        url: "webview.html?data=" + encodedText,
+                        aspectRatio: 1.0
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                return JSON.stringify({ error: "Failed: " + e.message });
+            }
+        };
+    </script>
+</body>
+</html>
